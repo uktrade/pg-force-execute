@@ -15,11 +15,12 @@ pip install pg-force-execute
 ```python
 import datetime
 from pg_force_execute import pg_force_execute
+import sqlalchemy as sa
 
 pg_force_execute(
-    query,   # String SQL query to execute
-    conn,    # SQLAlchemy connection to run the query
-    engine,  # SQLAlchemy engine that will create new connections to cancel blocking queries
+    sa.text(query), # SQL query to execute
+    conn,           # SQLAlchemy connection to run the query
+    engine,         # SQLAlchemy engine that will create new connections to cancel blocking queries
     delay=datetime.timedelta(minutes=5),  # Amount of time to wait before cancelling queries
 )
 ```

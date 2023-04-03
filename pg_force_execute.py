@@ -1,9 +1,9 @@
 import datetime
 import logging
-import threading
+from threading import Event, Thread
+from time import sleep
 
-from psycopg2 import sql
-
+import sqlalchemy as sa
 logger = logging.getLogger(__name__)
 
 
@@ -15,7 +15,7 @@ def pg_force_execute(query, conn, engine, delay=datetime.timedelta(minutes=5)):
         while not exit.is_set():
             if datetime.datetime.utcnow() - started > delay:
                 break
-            sleep(5)
+            sleep(1)
 
         while not exit.is_set():
             with engine.begin() as conn:
@@ -24,7 +24,7 @@ def pg_force_execute(query, conn, engine, delay=datetime.timedelta(minutes=5)):
                 # just be holding locks. To force release of the locks, we have to call
                 # pg_terminate_backend
                 cancelled_queries = conn.execute(
-                    sql.SQL(
+                    sa.text(
                         """
                     SELECT
                         activity.usename AS usename,
@@ -35,20 +35,15 @@ def pg_force_execute(query, conn, engine, delay=datetime.timedelta(minutes=5)):
                         UNNEST(pg_blocking_pids({})) AS pids(pid)
                     INNER JOIN
                         pg_stat_activity activity ON activity.pid = pids.pid;
-                    """
-                    )
-                    .format(sql.Literal(pid))
-                    .as_string(conn.connection.cursor())
+                    """, pid)
                 ).fetchall()
                 logger.info("# queries to cancel: %s", len(cancelled_queries))
                 for cancelled_query in cancelled_queries:
                     logger.exception('Cancelled query %s', cancelled_query)
-            sleep(5)
+            sleep(1)
 
     pid = conn.execute(
-        sql.SQL('SELECT pg_backend_pid()')
-        .format()
-        .as_string(conn.connection.cursor())
+        sa.text('SELECT pg_backend_pid()')
     ).fetchall()[0][0]
     exit = Event()
     t = Thread(target=force_unblock, args=(pid, exit))

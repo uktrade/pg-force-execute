@@ -20,6 +20,11 @@ dependencies = [
     "sqlalchemy>=1.4.40",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.2.1",
+]
+
 [project.urls]
 "Source" = "https://github.com/uktrade/pg-force-execute"
 

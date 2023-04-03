@@ -32,3 +32,12 @@ with engine.begin() as conn:
     )
     print(results.fetchall())
 ```
+
+
+## Running tests locally
+
+```bash
+pip install -e ".[dev]"  # Only needed once
+./start-services.sh      # Only needed once
+pytest
+```

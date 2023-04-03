@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pg-force-execute"
+version = "0.0.1"
+authors = [
+  { name="Department for International Trade", email="sre@digital.trade.gov.uk" },
+]
+description = "Utility function to run a PostgreSQL query with SQLAlchemy, terminating any queries that block it"
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "psycopg2-binary==2.8.6",
+]
+
+[project.urls]
+"Source" = "https://github.com/uktrade/pg-force-execute"
+
+[tool.hatch.build]
+include = [
+  "pg_force_execute.py"
+]

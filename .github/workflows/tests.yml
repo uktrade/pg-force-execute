@@ -19,12 +19,12 @@ jobs:
       - uses: "actions/setup-python@v4"
         with:
           python-version: '${{ matrix.python-version }}'
-      - name: "Install package and python dependencies"
-        run: |
-          pip install .[dev]
       - name: "Run PostgreSQL"
         run: |
           ./start-services.sh
+      - name: "Install package and python dependencies"
+        run: |
+          pip install .[dev]
       - name: "Wait for PostgreSQL"
         run: "timeout 60 bash -c 'until echo > /dev/tcp/127.0.0.1/5432; do sleep 5; done'"
       - name: "Test"

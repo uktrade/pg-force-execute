@@ -15,4 +15,4 @@ def test_basic():
             engine,
             delay=datetime.timedelta(minutes=5),
         )
-        print(results.fetchall())
+        assert results.fetchall() == [(1,)]

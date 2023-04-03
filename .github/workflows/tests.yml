@@ -8,7 +8,6 @@ on:
 jobs:
   test:
     name: Test
-    needs: download
     runs-on: ubuntu-latest
     strategy:
       matrix:

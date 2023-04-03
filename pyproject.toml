@@ -17,7 +17,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "psycopg2-binary==2.8.6",
+    "sqlalchemy>=1.4.40",
 ]
 
 [project.urls]

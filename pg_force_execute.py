@@ -7,13 +7,13 @@ from psycopg2 import sql
 logger = logging.getLogger(__name__)
 
 
-def pg_force_execute(conn, engine, query):
+def pg_force_execute(conn, engine, query, delay=datetime.timedelta(minutes=5)):
 
     def force_unblock(pid, exit):
         started = datetime.datetime.utcnow()
 
         while not exit.is_set():
-            if datetime.datetime.utcnow() - started > timedelta(minutes=5):
+            if datetime.datetime.utcnow() - started > delay:
                 break
             sleep(5)
 

@@ -3,12 +3,12 @@ import logging
 from threading import Event, Thread
 
 import sqlalchemy as sa
-logger = logging.getLogger(__name__)
 
 
 def pg_force_execute(query, conn, engine,
                      delay=datetime.timedelta(minutes=5),
                      check_interval=datetime.timedelta(seconds=1),
+                     logger=logging.getLogger(__name__),
 ):
 
     def force_unblock(pid, exit):

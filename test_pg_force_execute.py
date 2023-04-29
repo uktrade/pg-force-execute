@@ -27,6 +27,7 @@ def test_basic():
 
         conn_blocker.execute(sa.text("LOCK TABLE pg_force_execute_test IN ACCESS EXCLUSIVE MODE"))
 
+        start = datetime.datetime.now()
         results = pg_force_execute(
             sa.text("SELECT * FROM pg_force_execute_test;"),
             conn_blocked,
@@ -35,3 +36,4 @@ def test_basic():
         ).fetchall()
 
     assert results == []
+    assert datetime.datetime.now() - start >= datetime.timedelta(seconds=1)

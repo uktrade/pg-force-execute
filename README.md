@@ -36,6 +36,27 @@ with engine.begin() as conn:
 ```
 
 
+## API
+
+The API a single function `pg_force_execute`.
+
+`pg_force_execute`(query, conn, engine, delay=datetime.timedelta(minutes=5), check_interval=datetime.timedelta(seconds=1), cancel_timeout=datetime.timedelta(seconds=10), logger=logging.getLogger("pg_force_execute"))
+
+- `query` - A SQLAlchemy text instance of the query to run
+
+- `conn` - A SQLAlchemy connection to run `query` on
+
+- `engine` - A SQLAlchemy engine to create a new connection that will be use
+
+- `delay` (optional) - How long to wait before attempting to terminate backend blocking `query`
+
+- `check_interval` (optional) - The interval between repeated attempted to terminate backends blocking `query`
+
+- `cancel_timeout` (optional) - How long to wait for the termination to complete
+
+- `logger` (optional) The Python logger instance through which to log
+
+
 ## Running tests locally
 
 ```bash

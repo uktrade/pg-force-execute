@@ -39,9 +39,9 @@ def pg_force_execute(query, conn, engine,
                     """, pid)
                 ).fetchall()
                 if not cancelled_queries:
-                    logger.info('No queries to cancel')
+                    logger.info('No blocking queries to cancel')
                 for cancelled_query in cancelled_queries:
-                    logger.error('Cancelled query %s', cancelled_query)
+                    logger.error('Cancelled blocking query %s', cancelled_query)
 
     pid = conn.execute(
         sa.text('SELECT pg_backend_pid()')

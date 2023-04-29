@@ -64,3 +64,38 @@ def test_non_blocking():
 
     assert results == [(1,)]
     assert end - start < datetime.timedelta(seconds=1)
+
+
+def test_cancel_exception_propagates():
+    engine = sa.create_engine('postgresql://postgres@127.0.0.1:5432/')
+    bad_engine = sa.create_engine('postgresql://user_does_not_exist@127.0.0.1:5432/')
+
+    with engine.begin() as conn:
+        conn.execute(sa.text("DROP TABLE IF EXISTS pg_force_execute_test;"))
+        conn.execute(sa.text("CREATE TABLE pg_force_execute_test(id int);"))
+
+    with \
+                pytest.raises(sa.exc.OperationalError, match='user_does_not_exist'), \
+                engine.begin() as conn_blocked:
+
+            pg_force_execute(
+                sa.text("SELECT pg_sleep(3);"),
+                conn_blocked,
+                bad_engine,
+                delay=datetime.timedelta(seconds=1),
+            ).fetchall()
+
+
+def test_query_exception_propagates():
+    engine = sa.create_engine('postgresql://postgres@127.0.0.1:5432/')
+
+    with \
+                pytest.raises(sa.exc.ProgrammingError, match='table_does_not_exist'), \
+                engine.begin() as conn:
+
+            pg_force_execute(
+                sa.text("SELECT * FROM table_does_not_exist;"),
+                conn,
+                engine,
+                delay=datetime.timedelta(seconds=1),
+            )

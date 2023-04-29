@@ -1,12 +1,20 @@
 import contextlib
 import datetime
+import pytest
 import sqlalchemy as sa
 from pg_force_execute import pg_force_execute
 
 # Run postgresql locally should allow the below to run
 # ./start-services.sh
 
-def test_basic():
+@pytest.mark.parametrize(
+    "delay",
+    (
+        datetime.timedelta(seconds=1), 
+        datetime.timedelta(seconds=5),
+    )
+)
+def test_blocking(delay):
     engine = sa.create_engine('postgresql://postgres@127.0.0.1:5432/')
 
     @contextlib.contextmanager
@@ -27,10 +35,32 @@ def test_basic():
 
         conn_blocker.execute(sa.text("LOCK TABLE pg_force_execute_test IN ACCESS EXCLUSIVE MODE"))
 
+        start = datetime.datetime.now()
         results = pg_force_execute(
             sa.text("SELECT * FROM pg_force_execute_test;"),
             conn_blocked,
             engine,
-            delay=datetime.timedelta(seconds=1),
-        )
-        assert results.fetchall() == [(1,)]
+            delay=delay,
+        ).fetchall()
+        end = datetime.datetime.now()
+
+    assert results == []
+    assert end - start >= delay
+    assert end - start < delay + datetime.timedelta(seconds=2)
+
+
+def test_non_blocking():
+    engine = sa.create_engine('postgresql://postgres@127.0.0.1:5432/')
+
+    with engine.begin() as conn:
+        start = datetime.datetime.now()
+        results = pg_force_execute(
+            sa.text("SELECT 1"),
+            conn,
+            engine,
+            delay=datetime.timedelta(seconds=5),
+        ).fetchall()
+        end = datetime.datetime.now()
+
+    assert results == [(1,)]
+    assert end - start < datetime.timedelta(seconds=1)

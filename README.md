@@ -12,7 +12,7 @@ pip install pg-force-execute
 ```
 
 
-## Usage
+## Example usage
 
 ```python
 import datetime

@@ -34,10 +34,10 @@ def pg_force_execute(query, conn, engine,
                             age(clock_timestamp(), activity.query_start) AS age,
                             pg_terminate_backend(pids.pid)
                         FROM
-                            UNNEST(pg_blocking_pids({})) AS pids(pid)
+                            UNNEST(pg_blocking_pids(:pid)) AS pids(pid)
                         INNER JOIN
                             pg_stat_activity activity ON activity.pid = pids.pid;
-                    """, pid)
+                    """), {"pid": pid},
                 ).fetchall()
                 if not cancelled_queries:
                     logger.info('No blocking queries to cancel')

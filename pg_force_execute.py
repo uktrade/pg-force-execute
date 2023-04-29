@@ -11,38 +11,44 @@ def pg_force_execute(query, conn, engine,
                      cancel_timeout=datetime.timedelta(seconds=10),
                      logger=logging.getLogger("pg_force_execute"),
 ):
+    cancel_exception = None
 
     def force_unblock(pid, exit):
-        exit.wait(timeout=delay.total_seconds())
+        nonlocal cancel_exception
 
-        # Repeatedly check for other backends that block `query`, and cancel them if
-        # they are. The repeat check is to avoid race conditions - if another backend
-        # blocks this backend just after pg_blocking_pids returns its PIDs. If it's
-        # determined that PostgreSQL forbids this case the looping can be removed
-        while not exit.wait(timeout=check_interval.total_seconds()):
-            logger.info('Cancelling queries blocking PID %s running %s', pid, query)
-            with engine.begin() as conn:
-                # pg_cancel_backend isn't strong enough - the blocking PIDs might not be
-                # actually running a query, so there is nothing to cancel. They might
-                # just be holding locks. To force release of the locks, we have to call
-                # pg_terminate_backend
-                cancelled_queries = conn.execute(
-                    sa.text("""
-                        SELECT
-                            activity.usename AS usename,
-                            activity.query AS query,
-                            age(clock_timestamp(), activity.query_start) AS age,
-                            pg_terminate_backend(pids.pid)
-                        FROM
-                            UNNEST(pg_blocking_pids(:pid)) AS pids(pid)
-                        INNER JOIN
-                            pg_stat_activity activity ON activity.pid = pids.pid;
-                    """), {"pid": pid},
-                ).fetchall()
-                if not cancelled_queries:
-                    logger.info('No blocking queries to cancel')
-                for cancelled_query in cancelled_queries:
-                    logger.error('Cancelled blocking query %s', cancelled_query)
+        try:
+            exit.wait(timeout=(delay - check_interval).total_seconds())
+
+            # Repeatedly check for other backends that block `query`, and cancel them if
+            # they are. The repeat check is to avoid race conditions - if another backend
+            # blocks this backend just after pg_blocking_pids returns its PIDs. If it's
+            # determined that PostgreSQL forbids this case the looping can be removed
+            while not exit.wait(timeout=check_interval.total_seconds()):
+                logger.info('Cancelling queries blocking PID %s running %s', pid, query)
+                with engine.begin() as conn:
+                    # pg_cancel_backend isn't strong enough - the blocking PIDs might not be
+                    # actually running a query, so there is nothing to cancel. They might
+                    # just be holding locks. To force release of the locks, we have to call
+                    # pg_terminate_backend
+                    cancelled_queries = conn.execute(
+                        sa.text("""
+                            SELECT
+                                activity.usename AS usename,
+                                activity.query AS query,
+                                age(clock_timestamp(), activity.query_start) AS age,
+                                pg_terminate_backend(pids.pid)
+                            FROM
+                                UNNEST(pg_blocking_pids(:pid)) AS pids(pid)
+                            INNER JOIN
+                                pg_stat_activity activity ON activity.pid = pids.pid;
+                        """), {"pid": pid},
+                    ).fetchall()
+                    if not cancelled_queries:
+                        logger.info('No blocking queries to cancel')
+                    for cancelled_query in cancelled_queries:
+                        logger.error('Cancelled blocking query %s', cancelled_query)
+        except Exception as e:
+            cancel_exception = e
 
     pid = conn.execute(
         sa.text('SELECT pg_backend_pid()')
@@ -56,3 +62,5 @@ def pg_force_execute(query, conn, engine,
     finally:
         exit.set()
         t.join(timeout=cancel_timeout.total_seconds())
+        if cancel_exception is not None:
+            raise cancel_exception

@@ -47,3 +47,20 @@ def test_blocking(delay):
     assert results == []
     assert end - start >= delay
     assert end - start < delay + datetime.timedelta(seconds=2)
+
+
+def test_non_blocking():
+    engine = sa.create_engine('postgresql://postgres@127.0.0.1:5432/')
+
+    with engine.begin() as conn:
+        start = datetime.datetime.now()
+        results = pg_force_execute(
+            sa.text("SELECT 1"),
+            conn,
+            engine,
+            delay=datetime.timedelta(seconds=5),
+        ).fetchall()
+        end = datetime.datetime.now()
+
+    assert results == [(1,)]
+    assert end - start < datetime.timedelta(seconds=1)

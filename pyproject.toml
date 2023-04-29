@@ -8,7 +8,7 @@ version = "0.0.3"
 authors = [
   { name="Department for International Trade", email="sre@digital.trade.gov.uk" },
 ]
-description = "Utility function to run a PostgreSQL query with SQLAlchemy, terminating any queries that block it"
+description = "Utility function to run a PostgreSQL query with SQLAlchemy, terminating any other clients that block it"
 readme = "README.md"
 requires-python = ">=3.7"
 classifiers = [

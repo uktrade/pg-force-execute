@@ -37,7 +37,8 @@ def pg_force_execute(query, conn, engine,
                             pg_stat_activity activity ON activity.pid = pids.pid;
                     """, pid)
                 ).fetchall()
-                logger.info("# queries to cancel: %s", len(cancelled_queries))
+                if not cancelled_queries:
+                    logger.info('No queries to cancel')
                 for cancelled_query in cancelled_queries:
                     logger.error('Cancelled query %s', cancelled_query)
 

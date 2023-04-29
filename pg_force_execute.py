@@ -8,7 +8,7 @@ import sqlalchemy as sa
 def pg_force_execute(query, conn, engine,
                      delay=datetime.timedelta(minutes=5),
                      check_interval=datetime.timedelta(seconds=1),
-                     logger=logging.getLogger(__name__),
+                     logger=logging.getLogger("pg_force_execute"),
 ):
 
     def force_unblock(pid, exit):

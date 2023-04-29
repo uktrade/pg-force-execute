@@ -25,17 +25,16 @@ def pg_force_execute(query, conn, engine,
                 # just be holding locks. To force release of the locks, we have to call
                 # pg_terminate_backend
                 cancelled_queries = conn.execute(
-                    sa.text(
-                        """
-                    SELECT
-                        activity.usename AS usename,
-                        activity.query AS query,
-                        age(clock_timestamp(), activity.query_start) AS age,
-                        pg_terminate_backend(pids.pid)
-                    FROM
-                        UNNEST(pg_blocking_pids({})) AS pids(pid)
-                    INNER JOIN
-                        pg_stat_activity activity ON activity.pid = pids.pid;
+                    sa.text("""
+                        SELECT
+                            activity.usename AS usename,
+                            activity.query AS query,
+                            age(clock_timestamp(), activity.query_start) AS age,
+                            pg_terminate_backend(pids.pid)
+                        FROM
+                            UNNEST(pg_blocking_pids({})) AS pids(pid)
+                        INNER JOIN
+                            pg_stat_activity activity ON activity.pid = pids.pid;
                     """, pid)
                 ).fetchall()
                 logger.info("# queries to cancel: %s", len(cancelled_queries))

@@ -27,7 +27,7 @@ query = 'SELECT 1'  # A more realistic example would be something that needs an 
 
 with engine.begin() as conn:
     results = pg_force_execute(
-        sa.text(query), # SQL query to execute
+        sa.text(query), # SQLAlchemy statement to execute
         conn,           # SQLAlchemy connection to run the query
         engine,         # SQLAlchemy engine that will create new connections to cancel blocking queries
         delay=datetime.timedelta(minutes=5),  # Amount of time to wait before cancelling queries
@@ -40,17 +40,21 @@ with engine.begin() as conn:
 
 The API a single function `pg_force_execute`.
 
-`pg_force_execute`(query, conn, engine, delay=datetime.timedelta(minutes=5), check_interval=datetime.timedelta(seconds=1), termination_thread_timeout=datetime.timedelta(seconds=10), logger=logging.getLogger("pg_force_execute"))
+`pg_force_execute`(statement, conn, engine, parameters=None, execution_options=None, delay=datetime.timedelta(minutes=5), check_interval=datetime.timedelta(seconds=1), termination_thread_timeout=datetime.timedelta(seconds=10), logger=logging.getLogger("pg_force_execute"))
 
-- `query` - A SQLAlchemy text instance of the query to run
+- `statement` - A SQLAlchemy statement to be executed, passed to [Connection.execute](https://docs.sqlalchemy.org/en/20/core/connections.html#sqlalchemy.engine.Connection.execute.params.statement)
 
-- `conn` - A SQLAlchemy connection to run `query` on
+- `conn` - A [SQLAlchemy connection](https://docs.sqlalchemy.org/en/20/core/connections.html#sqlalchemy.engine.Connection) to run `statement` on
 
-- `engine` - A SQLAlchemy engine to create a new connection that will be used to terminate backends blocking `query`
+- `engine` - A [SQLAlchemy engine](https://docs.sqlalchemy.org/en/20/core/connections.html#sqlalchemy.engine.Engine) to create a new connection that will be used to terminate backends blocking `statement`
 
-- `delay` (optional) - How long to wait before attempting to terminate backends blocking `query`
+- `parameters` (optional) - SQLAlchemy parameters to be bound to `statement`, passed to [Connection.execute](https://docs.sqlalchemy.org/en/20/core/connections.html#sqlalchemy.engine.Connection.execute.params.parameters)
 
-- `check_interval` (optional) - The interval between repeated attempted to terminate backends blocking `query`
+- `execution_options` (optional) - Dictionary of execution options assocated with the `statement` execution, passed to [Connection.execute](https://docs.sqlalchemy.org/en/20/core/connections.html#sqlalchemy.engine.Connection.execute.params.execution_options)
+
+- `delay` (optional) - How long to wait before attempting to terminate backends blocking `statement`
+
+- `check_interval` (optional) - The interval between repeated attempted to terminate backends blocking `statement`
 
 - `termination_thread_timeout` (optional) - How long to wait for the termination to complete
 

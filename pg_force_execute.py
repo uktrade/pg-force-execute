@@ -19,6 +19,7 @@ def pg_force_execute(query, conn, engine,
         # blocks this backend just after pg_blocking_pids returns its PIDs. If it's
         # determined that PostgreSQL forbids this case the looping can be removed
         while not exit.wait(timeout=check_interval.total_seconds()):
+            logger.info('Cancelling queries blocking %s', query)
             with engine.begin() as conn:
                 # pg_cancel_backend isn't strong enough - the blocking PIDs might not be
                 # actually running a query, so there is nothing to cancel. They might

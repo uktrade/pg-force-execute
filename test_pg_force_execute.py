@@ -14,7 +14,7 @@ from pg_force_execute import pg_force_execute
         datetime.timedelta(seconds=5),
     )
 )
-def test_basic(delay):
+def test_blocking(delay):
     engine = sa.create_engine('postgresql://postgres@127.0.0.1:5432/')
 
     @contextlib.contextmanager

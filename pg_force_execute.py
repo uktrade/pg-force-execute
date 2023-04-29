@@ -14,6 +14,10 @@ def pg_force_execute(query, conn, engine,
     def force_unblock(pid, exit):
         exit.wait(timeout=delay.total_seconds())
 
+        # Repeatedly check for other backends that block `query`, and cancel them if
+        # they are. The repeat check is to avoid race conditions - if another backend
+        # blocks this backend just after pg_blocking_pids returns its PIDs. If it's
+        # determined that PostgreSQL forbids this case the looping can be removed
         while not exit.wait(timeout=check_interval.total_seconds()):
             with engine.begin() as conn:
                 # pg_cancel_backend isn't strong enough - the blocking PIDs might not be

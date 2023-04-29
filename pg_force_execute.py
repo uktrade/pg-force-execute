@@ -3,12 +3,12 @@ import logging
 from threading import Event, Thread
 
 import sqlalchemy as sa
-logger = logging.getLogger(__name__)
 
 
 def pg_force_execute(query, conn, engine,
                      delay=datetime.timedelta(minutes=5),
                      check_interval=datetime.timedelta(seconds=1),
+                     logger=logging.getLogger("pg_force_execute"),
 ):
 
     def force_unblock(pid, exit):
@@ -19,6 +19,7 @@ def pg_force_execute(query, conn, engine,
         # blocks this backend just after pg_blocking_pids returns its PIDs. If it's
         # determined that PostgreSQL forbids this case the looping can be removed
         while not exit.wait(timeout=check_interval.total_seconds()):
+            logger.info('Cancelling queries blocking PID %s running %s', pid, query)
             with engine.begin() as conn:
                 # pg_cancel_backend isn't strong enough - the blocking PIDs might not be
                 # actually running a query, so there is nothing to cancel. They might
@@ -37,9 +38,10 @@ def pg_force_execute(query, conn, engine,
                             pg_stat_activity activity ON activity.pid = pids.pid;
                     """, pid)
                 ).fetchall()
-                logger.info("# queries to cancel: %s", len(cancelled_queries))
+                if not cancelled_queries:
+                    logger.info('No blocking queries to cancel')
                 for cancelled_query in cancelled_queries:
-                    logger.error('Cancelled query %s', cancelled_query)
+                    logger.error('Cancelled blocking query %s', cancelled_query)
 
     pid = conn.execute(
         sa.text('SELECT pg_backend_pid()')

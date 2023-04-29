@@ -8,7 +8,7 @@ import sqlalchemy as sa
 def pg_force_execute(query, conn, engine,
                      delay=datetime.timedelta(minutes=5),
                      check_interval=datetime.timedelta(seconds=1),
-                     cancel_timeout=datetime.timedelta(seconds=10),
+                     termination_thread_timeout=datetime.timedelta(seconds=10),
                      logger=logging.getLogger("pg_force_execute"),
 ):
     cancel_exception = None
@@ -61,6 +61,6 @@ def pg_force_execute(query, conn, engine,
         return conn.execute(query)
     finally:
         exit.set()
-        t.join(timeout=cancel_timeout.total_seconds())
+        t.join(timeout=termination_thread_timeout.total_seconds())
         if cancel_exception is not None:
             raise cancel_exception

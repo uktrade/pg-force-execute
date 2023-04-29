@@ -1,12 +1,20 @@
 import contextlib
 import datetime
+import pytest
 import sqlalchemy as sa
 from pg_force_execute import pg_force_execute
 
 # Run postgresql locally should allow the below to run
 # ./start-services.sh
 
-def test_basic():
+@pytest.mark.parametrize(
+    "delay",
+    (
+        datetime.timedelta(seconds=1), 
+        datetime.timedelta(seconds=5),
+    )
+)
+def test_basic(delay):
     engine = sa.create_engine('postgresql://postgres@127.0.0.1:5432/')
 
     @contextlib.contextmanager
@@ -32,8 +40,10 @@ def test_basic():
             sa.text("SELECT * FROM pg_force_execute_test;"),
             conn_blocked,
             engine,
-            delay=datetime.timedelta(seconds=1),
+            delay=delay,
         ).fetchall()
+        end = datetime.datetime.now()
 
     assert results == []
-    assert datetime.datetime.now() - start >= datetime.timedelta(seconds=1)
+    assert end - start >= delay
+    assert end - start < delay + datetime.timedelta(seconds=2)

@@ -8,6 +8,7 @@ import sqlalchemy as sa
 def pg_force_execute(query, conn, engine,
                      delay=datetime.timedelta(minutes=5),
                      check_interval=datetime.timedelta(seconds=1),
+                     cancel_timeout=datetime.timedelta(seconds=10),
                      logger=logging.getLogger("pg_force_execute"),
 ):
 
@@ -54,4 +55,4 @@ def pg_force_execute(query, conn, engine,
         return conn.execute(query)
     finally:
         exit.set()
-        t.join(timeout=10)
+        t.join(timeout=cancel_timeout.total_seconds())

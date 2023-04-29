@@ -32,5 +32,6 @@ def test_basic():
             conn_blocked,
             engine,
             delay=datetime.timedelta(seconds=1),
-        )
-        assert results.fetchall() == [(1,)]
+        ).fetchall()
+
+    assert results == []

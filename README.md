@@ -46,9 +46,9 @@ The API a single function `pg_force_execute`.
 
 - `conn` - A SQLAlchemy connection to run `query` on
 
-- `engine` - A SQLAlchemy engine to create a new connection that will be use
+- `engine` - A SQLAlchemy engine to create a new connection that will be used to terminate backends blocking `query`
 
-- `delay` (optional) - How long to wait before attempting to terminate backend blocking `query`
+- `delay` (optional) - How long to wait before attempting to terminate backends blocking `query`
 
 - `check_interval` (optional) - The interval between repeated attempted to terminate backends blocking `query`
 

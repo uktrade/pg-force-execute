@@ -39,7 +39,7 @@ def pg_force_execute(query, conn, engine, delay=datetime.timedelta(minutes=5)):
                 ).fetchall()
                 logger.info("# queries to cancel: %s", len(cancelled_queries))
                 for cancelled_query in cancelled_queries:
-                    logger.exception('Cancelled query %s', cancelled_query)
+                    logger.error('Cancelled query %s', cancelled_query)
             sleep(1)
 
     pid = conn.execute(

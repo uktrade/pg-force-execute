@@ -1,6 +1,8 @@
 # pg-force-execute
 
-Utility function to run a PostgreSQL query with SQLAlchemy, terminating any queries that continue to block it after a configurable delay.
+Utility function to run a PostgreSQL query with SQLAlchemy, terminating any other clients that continue to block it after a configurable delay.
+
+Using this function to run queries is somewhat of a last resort, but is useful in certain Extract Transform Load (ETL) pipeline contexts. For example, if it is more important to replace one table with another than to allow running queries on the table to complete, then this function can be used to run the relevant `ALTER TABLE RENAME TO` query.
 
 
 ## Installation
@@ -10,7 +12,7 @@ pip install pg-force-execute
 ```
 
 
-## Usage
+## Example usage
 
 ```python
 import datetime
@@ -32,6 +34,27 @@ with engine.begin() as conn:
     )
     print(results.fetchall())
 ```
+
+
+## API
+
+The API a single function `pg_force_execute`.
+
+`pg_force_execute`(query, conn, engine, delay=datetime.timedelta(minutes=5), check_interval=datetime.timedelta(seconds=1), cancel_timeout=datetime.timedelta(seconds=10), logger=logging.getLogger("pg_force_execute"))
+
+- `query` - A SQLAlchemy text instance of the query to run
+
+- `conn` - A SQLAlchemy connection to run `query` on
+
+- `engine` - A SQLAlchemy engine to create a new connection that will be use
+
+- `delay` (optional) - How long to wait before attempting to terminate backend blocking `query`
+
+- `check_interval` (optional) - The interval between repeated attempted to terminate backends blocking `query`
+
+- `cancel_timeout` (optional) - How long to wait for the termination to complete
+
+- `logger` (optional) The Python logger instance through which to log
 
 
 ## Running tests locally

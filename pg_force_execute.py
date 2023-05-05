@@ -1,3 +1,4 @@
+import contextlib
 import datetime
 import logging
 from threading import Event, Thread
@@ -5,8 +6,8 @@ from threading import Event, Thread
 import sqlalchemy as sa
 
 
-def pg_force_execute(statement, conn, engine,
-                     parameters=None, execution_options=None,
+@contextlib.contextmanager
+def pg_force_execute(conn, engine,
                      delay=datetime.timedelta(minutes=5),
                      check_interval=datetime.timedelta(seconds=1),
                      termination_thread_timeout=datetime.timedelta(seconds=10),
@@ -20,12 +21,11 @@ def pg_force_execute(statement, conn, engine,
         try:
             exit.wait(timeout=(delay - check_interval).total_seconds())
 
-            # Repeatedly check for other backends that block `statement`, and cancel them if
-            # they are. The repeat check is to avoid race conditions - if another backend
-            # blocks this backend just after pg_blocking_pids returns its PIDs. If it's
-            # determined that PostgreSQL forbids this case the looping can be removed
+            # Repeatedly check for other backends that block conn, and terminates them if they are
+            # The loop addreses the case that as the client context progresses, it might run queries
+            # that get blocked by clients not caught in the initial pg_blocking_pids call
             while not exit.wait(timeout=check_interval.total_seconds()):
-                logger.info('Cancelling queries blocking PID %s running %s', pid, statement)
+                logger.info('Cancelling queries blocking PID %s', pid)
                 with engine.begin() as conn:
                     # pg_cancel_backend isn't strong enough - the blocking PIDs might not be
                     # actually running a query, so there is nothing to cancel. They might
@@ -59,7 +59,7 @@ def pg_force_execute(statement, conn, engine,
     t.start()
 
     try:
-        return conn.execute(statement, parameters=parameters, execution_options=execution_options)
+        yield
     finally:
         exit.set()
         t.join(timeout=termination_thread_timeout.total_seconds())

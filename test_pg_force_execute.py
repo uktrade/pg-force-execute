@@ -26,22 +26,23 @@ def test_blocking(delay):
             pass
 
     with engine.begin() as conn:
-        conn.execute(sa.text("DROP TABLE IF EXISTS pg_force_execute_test;"))
-        conn.execute(sa.text("CREATE TABLE pg_force_execute_test(id int);"))
+        conn.execute(sa.text("DROP TABLE IF EXISTS pg_force_execute_test_1;"))
+        conn.execute(sa.text("DROP TABLE IF EXISTS pg_force_execute_test_2;"))
+        conn.execute(sa.text("CREATE TABLE pg_force_execute_test_1(id int);"))
+        conn.execute(sa.text("CREATE TABLE pg_force_execute_test_2(id int);"))
 
     with \
-            begin_ignore_terminated() as conn_blocker, \
-            engine.begin() as conn_blocked:
+            begin_ignore_terminated() as conn_blocker_1, \
+            begin_ignore_terminated() as conn_blocker_2, \
+            engine.begin() as conn_blocked, \
+            pg_force_execute(conn_blocked, engine, delay=delay):
 
-        conn_blocker.execute(sa.text("LOCK TABLE pg_force_execute_test IN ACCESS EXCLUSIVE MODE"))
+        conn_blocker_1.execute(sa.text("LOCK TABLE pg_force_execute_test_1 IN ACCESS EXCLUSIVE MODE"))
+        conn_blocker_2.execute(sa.text("LOCK TABLE pg_force_execute_test_2 IN ACCESS EXCLUSIVE MODE"))
 
         start = datetime.datetime.now()
-        results = pg_force_execute(
-            sa.text("SELECT * FROM pg_force_execute_test;"),
-            conn_blocked,
-            engine,
-            delay=delay,
-        ).fetchall()
+        results = conn_blocked.execute(sa.text("SELECT * FROM pg_force_execute_test_1;")).fetchall()
+        results += conn_blocked.execute(sa.text("SELECT * FROM pg_force_execute_test_2;")).fetchall()
         end = datetime.datetime.now()
 
     assert results == []
@@ -52,14 +53,12 @@ def test_blocking(delay):
 def test_non_blocking():
     engine = sa.create_engine('postgresql://postgres@127.0.0.1:5432/')
 
-    with engine.begin() as conn:
+    with \
+            engine.begin() as conn, \
+            pg_force_execute(conn, engine, delay=datetime.timedelta(seconds=5)):
+
         start = datetime.datetime.now()
-        results = pg_force_execute(
-            sa.text("SELECT 1"),
-            conn,
-            engine,
-            delay=datetime.timedelta(seconds=5),
-        ).fetchall()
+        results = conn.execute(sa.text("SELECT 1")).fetchall()
         end = datetime.datetime.now()
 
     assert results == [(1,)]
@@ -75,27 +74,19 @@ def test_cancel_exception_propagates():
         conn.execute(sa.text("CREATE TABLE pg_force_execute_test(id int);"))
 
     with \
-                pytest.raises(sa.exc.OperationalError, match='user_does_not_exist'), \
-                engine.begin() as conn_blocked:
+            pytest.raises(sa.exc.OperationalError, match='user_does_not_exist'), \
+            engine.begin() as conn_blocked, \
+            pg_force_execute(conn_blocked, bad_engine, delay=datetime.timedelta(seconds=1)):
 
-            pg_force_execute(
-                sa.text("SELECT pg_sleep(3);"),
-                conn_blocked,
-                bad_engine,
-                delay=datetime.timedelta(seconds=1),
-            ).fetchall()
+        conn_blocked.execute(sa.text("SELECT pg_sleep(3);")).fetchall()
 
 
 def test_query_exception_propagates():
     engine = sa.create_engine('postgresql://postgres@127.0.0.1:5432/')
 
     with \
-                pytest.raises(sa.exc.ProgrammingError, match='table_does_not_exist'), \
-                engine.begin() as conn:
+            pytest.raises(sa.exc.ProgrammingError, match='table_does_not_exist'), \
+            engine.begin() as conn, \
+            pg_force_execute(conn, engine, delay=datetime.timedelta(seconds=1)):
 
-            pg_force_execute(
-                sa.text("SELECT * FROM table_does_not_exist;"),
-                conn,
-                engine,
-                delay=datetime.timedelta(seconds=1),
-            )
+        conn.execute(sa.text("SELECT * FROM table_does_not_exist;"))

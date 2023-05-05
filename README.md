@@ -1,8 +1,8 @@
 # pg-force-execute
 
-Utility function to run a PostgreSQL query with SQLAlchemy, terminating any other clients that continue to block it after a configurable delay.
+Context manager to run PostgreSQL queries with SQLAlchemy, terminating any other clients that continue to block it after a configurable delay.
 
-Using this function to run queries is somewhat of a last resort, but is useful in certain Extract Transform Load (ETL) pipeline contexts. For example, if it is more important to replace one table with another than to allow running queries on the table to complete, then this function can be used to run the relevant `ALTER TABLE RENAME TO` query.
+Using this to wrap queries is somewhat of a last resort, but is useful in certain Extract Transform Load (ETL) pipeline contexts. For example, if it is more important to replace one table with another than to allow running queries on the table to complete, then this can be used to run the relevant `ALTER TABLE RENAME TO` query.
 
 
 ## Installation
@@ -25,32 +25,28 @@ from pg_force_execute import pg_force_execute
 engine = sa.create_engine('postgresql://postgres@127.0.0.1:5432/')
 query = 'SELECT 1'  # A more realistic example would be something that needs an exclusive lock on a table
 
-with engine.begin() as conn:
-    results = pg_force_execute(
-        sa.text(query), # SQLAlchemy statement to execute
-        conn,           # SQLAlchemy connection to run the query
-        engine,         # SQLAlchemy engine that will create new connections to cancel blocking queries
-        delay=datetime.timedelta(minutes=5),  # Amount of time to wait before cancelling queries
-    )
+with \
+        engine.begin() as conn, \
+        pg_force_execute(
+            conn,           # SQLAlchemy connection to run the query
+            engine,         # SQLAlchemy engine that will create new connections to cancel blocking queries
+            delay=datetime.timedelta(minutes=5),  # Amount of time to wait before cancelling queries
+        ):
+
+    results = conn.execute(query)
     print(results.fetchall())
 ```
 
 
 ## API
 
-The API a single function `pg_force_execute`.
+The API a single context manager `pg_force_execute`.
 
-`pg_force_execute`(statement, conn, engine, parameters=None, execution_options=None, delay=datetime.timedelta(minutes=5), check_interval=datetime.timedelta(seconds=1), termination_thread_timeout=datetime.timedelta(seconds=10), logger=logging.getLogger("pg_force_execute"))
-
-- `statement` - A SQLAlchemy statement to be executed, passed to [Connection.execute](https://docs.sqlalchemy.org/en/20/core/connections.html#sqlalchemy.engine.Connection.execute.params.statement)
+`pg_force_execute`(conn, engine, delay=datetime.timedelta(minutes=5), check_interval=datetime.timedelta(seconds=1), termination_thread_timeout=datetime.timedelta(seconds=10), logger=logging.getLogger("pg_force_execute"))
 
 - `conn` - A [SQLAlchemy connection](https://docs.sqlalchemy.org/en/20/core/connections.html#sqlalchemy.engine.Connection) to run `statement` on
 
 - `engine` - A [SQLAlchemy engine](https://docs.sqlalchemy.org/en/20/core/connections.html#sqlalchemy.engine.Engine) to create a new connection that will be used to terminate backends blocking `statement`
-
-- `parameters` (optional) - SQLAlchemy parameters to be bound to `statement`, passed to [Connection.execute](https://docs.sqlalchemy.org/en/20/core/connections.html#sqlalchemy.engine.Connection.execute.params.parameters)
-
-- `execution_options` (optional) - Dictionary of execution options assocated with the `statement` execution, passed to [Connection.execute](https://docs.sqlalchemy.org/en/20/core/connections.html#sqlalchemy.engine.Connection.execute.params.execution_options)
 
 - `delay` (optional) - How long to wait before attempting to terminate backends blocking `statement`
 

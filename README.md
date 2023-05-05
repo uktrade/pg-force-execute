@@ -44,13 +44,13 @@ The API a single context manager `pg_force_execute`.
 
 `pg_force_execute`(conn, engine, delay=datetime.timedelta(minutes=5), check_interval=datetime.timedelta(seconds=1), termination_thread_timeout=datetime.timedelta(seconds=10), logger=logging.getLogger("pg_force_execute"))
 
-- `conn` - A [SQLAlchemy connection](https://docs.sqlalchemy.org/en/20/core/connections.html#sqlalchemy.engine.Connection) to run `statement` on
+- `conn` - A [SQLAlchemy connection](https://docs.sqlalchemy.org/en/20/core/connections.html#sqlalchemy.engine.Connection) that will be unblocked
 
-- `engine` - A [SQLAlchemy engine](https://docs.sqlalchemy.org/en/20/core/connections.html#sqlalchemy.engine.Engine) to create a new connection that will be used to terminate backends blocking `statement`
+- `engine` - A [SQLAlchemy engine](https://docs.sqlalchemy.org/en/20/core/connections.html#sqlalchemy.engine.Engine) to create a new connection that will be used to terminate backends blocking `conn`
 
-- `delay` (optional) - How long to wait before attempting to terminate backends blocking `statement`
+- `delay` (optional) - How long to wait before attempting to terminate backends blocking `conn`
 
-- `check_interval` (optional) - The interval between repeated attempted to terminate backends blocking `statement`
+- `check_interval` (optional) - The interval between repeated attempted to terminate backends blocking `conn`
 
 - `termination_thread_timeout` (optional) - How long to wait for the termination to complete
 

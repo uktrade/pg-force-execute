@@ -28,7 +28,7 @@ query = 'SELECT 1'  # A more realistic example would be something that needs an 
 with \
         engine.begin() as conn, \
         pg_force_execute(
-            conn,           # SQLAlchemy connection to run the query
+            conn,                                 # SQLAlchemy connection to run the query
             delay=datetime.timedelta(minutes=5),  # Amount of time to wait before cancelling queries
         ):
 

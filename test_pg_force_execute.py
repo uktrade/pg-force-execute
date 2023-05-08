@@ -1,7 +1,10 @@
 import contextlib
 import datetime
+import uuid
 import pytest
 import sqlalchemy as sa
+from psycopg import sql
+
 from pg_force_execute import pg_force_execute
 
 # Run postgresql locally should allow the below to run
@@ -15,7 +18,7 @@ from pg_force_execute import pg_force_execute
     )
 )
 def test_blocking(delay):
-    engine = sa.create_engine('postgresql://postgres@127.0.0.1:5432/')
+    engine = sa.create_engine('postgresql+psycopg://postgres@127.0.0.1:5432/')
 
     @contextlib.contextmanager
     def begin_ignore_terminated():
@@ -35,7 +38,7 @@ def test_blocking(delay):
             begin_ignore_terminated() as conn_blocker_1, \
             begin_ignore_terminated() as conn_blocker_2, \
             engine.begin() as conn_blocked, \
-            pg_force_execute(conn_blocked, engine, delay=delay):
+            pg_force_execute(conn_blocked, delay=delay):
 
         conn_blocker_1.execute(sa.text("LOCK TABLE pg_force_execute_test_1 IN ACCESS EXCLUSIVE MODE"))
         conn_blocker_2.execute(sa.text("LOCK TABLE pg_force_execute_test_2 IN ACCESS EXCLUSIVE MODE"))
@@ -51,11 +54,11 @@ def test_blocking(delay):
 
 
 def test_non_blocking():
-    engine = sa.create_engine('postgresql://postgres@127.0.0.1:5432/')
+    engine = sa.create_engine('postgresql+psycopg://postgres@127.0.0.1:5432/')
 
     with \
             engine.begin() as conn, \
-            pg_force_execute(conn, engine, delay=datetime.timedelta(seconds=5)):
+            pg_force_execute(conn, delay=datetime.timedelta(seconds=5)):
 
         start = datetime.datetime.now()
         results = conn.execute(sa.text("SELECT 1")).fetchall()
@@ -66,27 +69,42 @@ def test_non_blocking():
 
 
 def test_cancel_exception_propagates():
-    engine = sa.create_engine('postgresql://postgres@127.0.0.1:5432/')
-    bad_engine = sa.create_engine('postgresql://user_does_not_exist@127.0.0.1:5432/')
+    user = uuid.uuid4().hex
+    engine = sa.create_engine('postgresql+psycopg://postgres@127.0.0.1:5432/')
+    bad_engine = sa.create_engine(f'postgresql+psycopg://{user}:password@127.0.0.1:5432/postgres')
+
+    @contextlib.contextmanager
+    def begin_ignore_terminated(engine):
+        try:
+            with engine.begin() as conn:
+                yield conn
+        except sa.exc.OperationalError:
+            pass
 
     with engine.begin() as conn:
+        driver_connection = conn.connection.driver_connection
         conn.execute(sa.text("DROP TABLE IF EXISTS pg_force_execute_test;"))
         conn.execute(sa.text("CREATE TABLE pg_force_execute_test(id int);"))
+        conn.execute(sa.text(sql.SQL("CREATE USER {} PASSWORD 'password';").format(sql.Identifier(user)).as_string(driver_connection)))
+        conn.execute(sa.text(sql.SQL("GRANT SELECT ON pg_force_execute_test TO {}").format(sql.Identifier(user)).as_string(driver_connection)))
 
     with \
-            pytest.raises(sa.exc.OperationalError, match='user_does_not_exist'), \
-            engine.begin() as conn_blocked, \
-            pg_force_execute(conn_blocked, bad_engine, delay=datetime.timedelta(seconds=1)):
+            pytest.raises(sa.exc.ProgrammingError, match='must be a superuser'), \
+            begin_ignore_terminated(engine) as conn_blocker_1, \
+            bad_engine.begin() as conn_blocked, \
+            pg_force_execute(conn_blocked, delay=datetime.timedelta(seconds=1)):
 
-        conn_blocked.execute(sa.text("SELECT pg_sleep(3);")).fetchall()
+        conn_blocker_1.execute(sa.text("LOCK TABLE pg_force_execute_test_1 IN ACCESS EXCLUSIVE MODE"))
+        conn_blocked.execute(sa.text("SET statement_timeout=2000"))
+        conn_blocked.execute(sa.text("SELECT * FROM pg_force_execute_test_1;")).fetchall()
 
 
 def test_query_exception_propagates():
-    engine = sa.create_engine('postgresql://postgres@127.0.0.1:5432/')
+    engine = sa.create_engine('postgresql+psycopg://postgres@127.0.0.1:5432/')
 
     with \
             pytest.raises(sa.exc.ProgrammingError, match='table_does_not_exist'), \
             engine.begin() as conn, \
-            pg_force_execute(conn, engine, delay=datetime.timedelta(seconds=1)):
+            pg_force_execute(conn, delay=datetime.timedelta(seconds=1)):
 
         conn.execute(sa.text("SELECT * FROM table_does_not_exist;"))

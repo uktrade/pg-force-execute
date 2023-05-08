@@ -7,7 +7,7 @@ import sqlalchemy as sa
 
 
 @contextlib.contextmanager
-def pg_force_execute(conn, engine,
+def pg_force_execute(conn,
                      delay=datetime.timedelta(minutes=5),
                      check_interval=datetime.timedelta(seconds=1),
                      termination_thread_timeout=datetime.timedelta(seconds=10),
@@ -26,12 +26,12 @@ def pg_force_execute(conn, engine,
             # that get blocked by clients not caught in the initial pg_blocking_pids call
             while not exit.wait(timeout=check_interval.total_seconds()):
                 logger.info('Cancelling queries blocking PID %s', pid)
-                with engine.begin() as conn:
+                with conn.engine.begin() as _conn:
                     # pg_cancel_backend isn't strong enough - the blocking PIDs might not be
                     # actually running a query, so there is nothing to cancel. They might
                     # just be holding locks. To force release of the locks, we have to call
                     # pg_terminate_backend
-                    cancelled_queries = conn.execute(
+                    cancelled_queries = _conn.execute(
                         sa.text("""
                             SELECT
                                 activity.usename AS usename,

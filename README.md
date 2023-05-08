@@ -33,7 +33,7 @@ with \
             delay=datetime.timedelta(minutes=5),  # Amount of time to wait before cancelling queries
         ):
 
-    results = conn.execute(query)
+    results = conn.execute(sa.text(query))
     print(results.fetchall())
 ```
 

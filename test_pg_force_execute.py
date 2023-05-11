@@ -16,7 +16,7 @@ from pg_force_execute import pg_force_execute
     "engine_type,sql",
     (
         ("postgresql+psycopg", sql3),
-        ("postgresql", sql2),
+        ("postgresql+psycopg2", sql2),
     )
 )
 @pytest.mark.parametrize(
@@ -66,7 +66,7 @@ def test_blocking(engine_type, sql, delay):
     "engine_type,sql",
     (
         ("postgresql+psycopg", sql3),
-        ("postgresql", sql2),
+        ("postgresql+psycopg2", sql2),
     )
 )
 def test_non_blocking(engine_type, sql):
@@ -88,7 +88,7 @@ def test_non_blocking(engine_type, sql):
     "engine_type,sql",
     (
         ("postgresql+psycopg", sql3),
-        ("postgresql", sql2),
+        ("postgresql+psycopg2", sql2),
     )
 )
 def test_cancel_exception_propagates(engine_type, sql):
@@ -126,7 +126,7 @@ def test_cancel_exception_propagates(engine_type, sql):
     "engine_type,sql",
     (
         ("postgresql+psycopg", sql3),
-        ("postgresql", sql2),
+        ("postgresql+psycopg2", sql2),
     )
 )
 def test_query_exception_propagates(engine_type, sql):

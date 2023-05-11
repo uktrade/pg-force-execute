@@ -3,13 +3,22 @@ import datetime
 import uuid
 import pytest
 import sqlalchemy as sa
-from psycopg import sql
+from psycopg import sql as sql3
+from psycopg2 import sql as sql2
 
 from pg_force_execute import pg_force_execute
 
 # Run postgresql locally should allow the below to run
 # ./start-services.sh
 
+
+@pytest.mark.parametrize(
+    "engine_type,sql",
+    (
+        ("postgresql+psycopg", sql3),
+        ("postgresql", sql2),
+    )
+)
 @pytest.mark.parametrize(
     "delay",
     (
@@ -17,8 +26,8 @@ from pg_force_execute import pg_force_execute
         datetime.timedelta(seconds=5),
     )
 )
-def test_blocking(delay):
-    engine = sa.create_engine('postgresql+psycopg://postgres@127.0.0.1:5432/')
+def test_blocking(engine_type, sql, delay):
+    engine = sa.create_engine(f'{engine_type}://postgres@127.0.0.1:5432/')
 
     @contextlib.contextmanager
     def begin_ignore_terminated():
@@ -53,8 +62,15 @@ def test_blocking(delay):
     assert end - start < delay + datetime.timedelta(seconds=2)
 
 
-def test_non_blocking():
-    engine = sa.create_engine('postgresql+psycopg://postgres@127.0.0.1:5432/')
+@pytest.mark.parametrize(
+    "engine_type,sql",
+    (
+        ("postgresql+psycopg", sql3),
+        ("postgresql", sql2),
+    )
+)
+def test_non_blocking(engine_type, sql):
+    engine = sa.create_engine(f'{engine_type}://postgres@127.0.0.1:5432/')
 
     with \
             engine.begin() as conn, \
@@ -68,10 +84,17 @@ def test_non_blocking():
     assert end - start < datetime.timedelta(seconds=1)
 
 
-def test_cancel_exception_propagates():
+@pytest.mark.parametrize(
+    "engine_type,sql",
+    (
+        ("postgresql+psycopg", sql3),
+        ("postgresql", sql2),
+    )
+)
+def test_cancel_exception_propagates(engine_type, sql):
     user = uuid.uuid4().hex
-    engine = sa.create_engine('postgresql+psycopg://postgres@127.0.0.1:5432/')
-    bad_engine = sa.create_engine(f'postgresql+psycopg://{user}:password@127.0.0.1:5432/postgres')
+    engine = sa.create_engine(f'{engine_type}://postgres@127.0.0.1:5432/')
+    bad_engine = sa.create_engine(f'{engine_type}://{user}:password@127.0.0.1:5432/postgres')
 
     @contextlib.contextmanager
     def begin_ignore_terminated(engine):
@@ -99,8 +122,15 @@ def test_cancel_exception_propagates():
         conn_blocked.execute(sa.text("SELECT * FROM pg_force_execute_test_1;")).fetchall()
 
 
-def test_query_exception_propagates():
-    engine = sa.create_engine('postgresql+psycopg://postgres@127.0.0.1:5432/')
+@pytest.mark.parametrize(
+    "engine_type,sql",
+    (
+        ("postgresql+psycopg", sql3),
+        ("postgresql", sql2),
+    )
+)
+def test_query_exception_propagates(engine_type, sql):
+    engine = sa.create_engine(f'{engine_type}://postgres@127.0.0.1:5432/')
 
     with \
             pytest.raises(sa.exc.ProgrammingError, match='table_does_not_exist'), \

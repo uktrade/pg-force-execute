@@ -4,6 +4,8 @@ Context manager to run PostgreSQL queries with SQLAlchemy, terminating any other
 
 Using this to wrap queries is somewhat of a last resort, but is useful in certain Extract Transform Load (ETL) pipeline contexts. For example, if it is more important to replace one table with another than to allow running queries on the table to complete, then this can be used to run the relevant `ALTER TABLE RENAME TO` query.
 
+Tested against [psycopg2](https://www.psycopg.org/docs/) and [Psycopg 3](https://www.psycopg.org/psycopg3/).
+
 
 ## Installation
 

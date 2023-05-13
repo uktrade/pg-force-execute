@@ -10,7 +10,7 @@ authors = [
 ]
 description = "Context manager to run PostgreSQL queries with SQLAlchemy, terminating any other clients that block them"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.7.1"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",

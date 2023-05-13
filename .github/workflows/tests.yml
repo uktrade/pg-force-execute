@@ -13,25 +13,21 @@ jobs:
       matrix:
         python-version:
           - "3.9.0"
-          - "3.9"
           - "3.10.0"
-          - "3.10"
           - "3.11.0"
-          - "3.11"
         postgresql-version:
           - "postgres:9.6"
           - "postgres:10.0"
-          - "postgres:10"
           - "postgres:11.0"
-          - "postgres:11"
           - "postgres:12.0"
-          - "postgres:12"
           - "postgres:13.0"
-          - "postgres:13"
           - "postgres:14.0"
-          - "postgres:14"
           - "postgres:15.0"
-          - "postgres:15"
+        # sqlalchemy 1.4 doesn't support psycopg3
+        ci-extras:
+          - ci-psycopg2-sqlalchemy1
+          - ci-psycopg2-sqlalchemy2
+          - ci-psycopg3-sqlalchemy2
     steps:
       - name: "Checkout"
         uses: "actions/checkout@v3"
@@ -43,7 +39,7 @@ jobs:
           ./start-services.sh ${{ matrix.postgresql-version }}
       - name: "Install package and python dependencies"
         run: |
-          pip install .[dev]
+          pip install .[ci,${{ matrix.ci-extras }}]
       - name: "Wait for PostgreSQL"
         run: "timeout 60 bash -c 'until echo > /dev/tcp/127.0.0.1/5432; do sleep 5; done'"
       - name: "Test"

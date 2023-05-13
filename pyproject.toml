@@ -17,7 +17,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "sqlalchemy>=1.4.0",
+    "sqlalchemy>=1.4.24",
 ]
 
 [project.optional-dependencies]
@@ -31,7 +31,7 @@ ci = [
 ]
 ci-psycopg2-sqlalchemy1 = [
     "psycopg2==2.9.2",
-    "sqlalchemy==1.4.0",
+    "sqlalchemy==1.4.24",
 ]
 ci-psycopg2-sqlalchemy2 = [
     "psycopg2==2.9.2",

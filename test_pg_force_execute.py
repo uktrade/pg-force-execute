@@ -15,10 +15,6 @@ except ImportError:
     from psycopg2 import sql
     engine_type = 'postgresql+psycopg2'
 
-get_connection = \
-    (lambda conn: conn.connection.driver_connection) if tuple(int(v) for v in sa.__version__.split('.')) >= (2,0,0) else \
-    (lambda conn: conn.connection.connection)
-
 from pg_force_execute import pg_force_execute
 
 # Run postgresql locally should allow the below to run
@@ -97,7 +93,7 @@ def test_cancel_exception_propagates():
             pass
 
     with engine.begin() as conn:
-        driver_connection = get_connection(conn)
+        driver_connection = conn.connection.driver_connection
         conn.execute(sa.text("DROP TABLE IF EXISTS pg_force_execute_test;"))
         conn.execute(sa.text("CREATE TABLE pg_force_execute_test(id int);"))
         conn.execute(sa.text(sql.SQL("CREATE USER {} PASSWORD 'password';").format(sql.Identifier(user)).as_string(driver_connection)))

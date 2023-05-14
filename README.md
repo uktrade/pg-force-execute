@@ -7,8 +7,10 @@ Using this to wrap queries is somewhat of a last resort, but is useful in certai
 
 ## Installation
 
+`pg-force-execute` can be installed from PyPI using pip. `psycopg2` or `psycopg` (Psycopg 3) must also be explicitly installed.
+
 ```bash
-pip install pg-force-execute
+pip install pg-force-execute psycopg
 ```
 
 

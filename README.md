@@ -39,21 +39,11 @@ with \
 ```
 
 
-## Compatibility
-
-- Python >= 3.7.1 (tested on 3.7.1, 3.8.0, 3.9.0, 3.10.0, and 3.11.0)
-- psycopg2 >= 2.9.2 or Psycopg 3 >= 3.1.4
-- SQLAlchemy >= 1.4.24 (tested on 1.4.24 and 2.0.0)
-- PostgreSQL >= 9.6 (tested on 9.6, 10.0, 11.0, 12.0, 13.0, 14.0, and 15.0)
-
-Note that SQLAlchemy < 2 does not support Psycopg 3.
-
-
 ## API
 
 The API a single context manager `pg_force_execute`.
 
-`pg_force_execute`(conn, engine, delay=datetime.timedelta(minutes=5), check_interval=datetime.timedelta(seconds=1), termination_thread_timeout=datetime.timedelta(seconds=10), logger=logging.getLogger("pg_force_execute"))
+`pg_force_execute`(conn, delay=datetime.timedelta(minutes=5), check_interval=datetime.timedelta(seconds=1), termination_thread_timeout=datetime.timedelta(seconds=10), logger=logging.getLogger("pg_force_execute"))
 
 - `conn` - A [SQLAlchemy connection](https://docs.sqlalchemy.org/en/20/core/connections.html#sqlalchemy.engine.Connection) that will be unblocked
 
@@ -66,10 +56,20 @@ The API a single context manager `pg_force_execute`.
 - `logger` (optional) The Python logger instance through which to log
 
 
+## Compatibility
+
+- Python >= 3.7.1 (tested on 3.7.1, 3.8.0, 3.9.0, 3.10.0, and 3.11.0)
+- psycopg2 >= 2.9.2 or Psycopg 3 >= 3.1.4
+- SQLAlchemy >= 1.4.24 (tested on 1.4.24 and 2.0.0)
+- PostgreSQL >= 9.6 (tested on 9.6, 10.0, 11.0, 12.0, 13.0, 14.0, and 15.0)
+
+Note that SQLAlchemy < 2 does not support Psycopg 3.
+
+
 ## Running tests locally
 
 ```bash
-pip install -e ".[dev]"  # Only needed once
-./start-services.sh      # Only needed once
+python -m pip install -e ".[dev]"  # Only needed once
+./start-services.sh                # Only needed once
 pytest
 ```

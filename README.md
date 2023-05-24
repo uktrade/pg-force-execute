@@ -43,7 +43,7 @@ with \
 
 The API a single context manager `pg_force_execute`.
 
-`pg_force_execute`(conn, delay=datetime.timedelta(minutes=5), check_interval=datetime.timedelta(seconds=1), termination_thread_timeout=datetime.timedelta(seconds=10), logger=logging.getLogger("pg_force_execute"))
+`pg_force_execute`(conn, delay=datetime.timedelta(minutes=5), check_interval=datetime.timedelta(seconds=1), cleanup_timeout=datetime.timedelta(seconds=10), logger=logging.getLogger("pg_force_execute"))
 
 - `conn` - A [SQLAlchemy connection](https://docs.sqlalchemy.org/en/20/core/connections.html#sqlalchemy.engine.Connection) that will be unblocked
 
@@ -51,7 +51,9 @@ The API a single context manager `pg_force_execute`.
 
 - `check_interval` (optional) - The interval between repeated attempted to terminate backends blocking `conn`
 
-- `termination_thread_timeout` (optional) - How long to wait for the termination to complete
+- `cleanup_timeout` (optional) - How long to wait for resources to be cleaned up before allowing exit of the context manager
+
+    For usual operation this parameter shouldn't need to be changed.
 
 - `logger` (optional) The Python logger instance through which to log
 

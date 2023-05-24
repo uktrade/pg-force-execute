@@ -69,7 +69,7 @@ Note that SQLAlchemy < 2 does not support Psycopg 3.
 ## Running tests locally
 
 ```bash
-pip install -e ".[dev]"  # Only needed once
-./start-services.sh      # Only needed once
+python -m pip install -e ".[dev]"  # Only needed once
+./start-services.sh                # Only needed once
 pytest
 ```

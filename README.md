@@ -49,7 +49,7 @@ The API a single context manager `pg_force_execute`.
 
 - `delay` (optional) - How long to wait before attempting to terminate backends blocking `conn`
 
-- `check_interval` (optional) - The interval between repeated attempted to terminate backends blocking `conn`
+- `check_interval` (optional) - The interval between repeated attempts to terminate backends blocking `conn`
 
 - `cleanup_timeout` (optional) - How long to wait for resources to be cleaned up before allowing exit of the context manager
 

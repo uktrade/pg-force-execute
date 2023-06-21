@@ -4,42 +4,26 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pg-force-execute"
-version = "0.0.11"
+version = "0.0.0.dev0"
 authors = [
   { name="Department for International Trade", email="sre@digital.trade.gov.uk" },
 ]
 description = "Context manager to run PostgreSQL queries with SQLAlchemy, terminating any other clients that block them"
 readme = "README.md"
-requires-python = ">=3.7.1"
+requires-python = ">=3.7"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "sqlalchemy>=1.4.24",
+    "sqlalchemy>=1.4.40",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "psycopg>=3.1.4",
-    "psycopg2>=2.9.2",
+    "psycopg[binary]>=3.1.9",
     "pytest>=7.2.1",
-]
-ci = [
-    "pytest==7.2.1",
-]
-ci-psycopg2-sqlalchemy1 = [
-    "psycopg2==2.9.2",
-    "sqlalchemy==1.4.24",
-]
-ci-psycopg2-sqlalchemy2 = [
-    "psycopg2==2.9.2",
-    "sqlalchemy==2.0.0",
-]
-ci-psycopg3-sqlalchemy2 = [
-    "psycopg==3.1.4",
-    "sqlalchemy==2.0.0",
 ]
 
 [project.urls]

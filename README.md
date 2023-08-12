@@ -1,5 +1,7 @@
 # pg-force-execute
 
+[![PyPI package](https://img.shields.io/pypi/v/pg-force-execute?label=PyPI%20package&color=%234c1)](https://pypi.org/project/pg-force-execute/) [![Test suite](https://img.shields.io/github/actions/workflow/status/uktrade/pg-force-execute/tests.yml?label=Test%20suite)](https://github.com/uktrade/pg-force-execute/actions/workflows/tests.yml) [![Code coverage](https://img.shields.io/codecov/c/github/uktrade/pg-force-execute?label=Code%20coverage)](https://app.codecov.io/gh/uktrade/pg-force-execute)
+
 Context manager to run PostgreSQL queries with SQLAlchemy, terminating any other clients that continue to block it after a configurable delay.
 
 Using this to wrap queries is somewhat of a last resort, but is useful in certain Extract Transform Load (ETL) pipeline contexts. For example, if it is more important to replace one table with another than to allow running queries on the table to complete, then this can be used to run the relevant `ALTER TABLE RENAME TO` query.

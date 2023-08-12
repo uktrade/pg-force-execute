@@ -100,7 +100,7 @@ def test_cancel_exception_propagates():
         conn.execute(sa.text(sql.SQL("GRANT SELECT ON pg_force_execute_test TO {}").format(sql.Identifier(user)).as_string(driver_connection)))
 
     with \
-            pytest.raises(sa.exc.ProgrammingError, match='must be a superuser'), \
+            pytest.raises(sa.exc.ProgrammingError, match='must be a superuser|Only roles with the SUPERUSER attribute'), \
             begin_ignore_terminated(engine) as conn_blocker_1, \
             bad_engine.begin() as conn_blocked, \
             pg_force_execute(conn_blocked, delay=datetime.timedelta(seconds=1)):
